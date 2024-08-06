@@ -35,3 +35,6 @@ By default, images can be sent to http://localhost:8000/image as a `POST` reques
 ```
 
 You can access the API endpoint documentation at http://localhost:8000/docs.
+
+### Configuration
+If the model used in the HCE Inference Server changes, make sure to update the `MODEL_NAME` environment variable in `.env`.
