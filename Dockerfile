@@ -3,11 +3,14 @@ FROM python:3.10
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt
-COPY ./.env /code/.env
 
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
+COPY ./deploy.sh /code/deploy.sh
 COPY ./res /code/res
 COPY ./server.py /code/
+COPY ./.env /code/.env
 
-CMD ["fastapi", "run", "server.py", "--port", "80"]
+RUN chmod 777 /code/deploy.sh
+
+CMD ["/code/deploy.sh"]

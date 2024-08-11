@@ -7,16 +7,34 @@ from PIL import Image
 from dotenv import load_dotenv
 from collections import defaultdict
 from fastapi import FastAPI, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 # import timeit
 
-# Initialize labels and 
+# Initialize labels and session so no reconnection delay
 load_dotenv()
 labelMap = defaultdict(str)
-app = FastAPI()
 session = requests.Session()
 
-baseUrl = os.getenv("TF_SERVING_ADDR") or os.getenv("DOCKER_SHARED_IP") or "localhost"
-tfServingUrl = f"http://{baseUrl}/v1/models/{os.getenv('MODEL_NAME')}:predict"
+app = FastAPI()
+
+origins = [
+    "*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+if os.getenv("DOCKER_SHARED_IP"):
+    baseUrl = "http://" + os.getenv("DOCKER_SHARED_IP")
+else:
+    baseUrl = os.getenv("TF_SERVING_ADDR")
+    
+tfServingUrl = f"{baseUrl}/v1/models/{os.getenv('MODEL_NAME')}:predict"
 
 print("tf-serving:", tfServingUrl)
 
@@ -72,10 +90,10 @@ def parse_response(res, threshold):
     objs = [{
             "className": labelMap[classes[i]],
             "score": scores[i],
-            "y": boxes[i][0],
-            "x": boxes[i][1],
-            "height": boxes[i][2],
-            "width": boxes[i][3]
+            "y1": boxes[i][0],
+            "x1": boxes[i][1],
+            "y2": boxes[i][2],
+            "x2": boxes[i][3]
         } for i in range(len(classes)) if scores[i] > threshold]
     return objs
 
@@ -93,18 +111,21 @@ def index():
     return {"Webserver for tf-serving"}
 
 @app.post("/image")
-async def parseImage(img: UploadFile):
+async def parseImage(image: UploadFile):
     try:
-        imgFile = await img.read()
+        imgFile = await image.read()
         payload = { "instances": preprocess_image(imgFile).tolist() }
         res = session.post(tfServingUrl, data=json.dumps(payload))
         threshold = 0.5
         response = packageObjects(res.text, threshold)
+        print(response)
         return response
 
     except Exception as e:
         print("POST /image error:", e)
         return e
+
+# TODO: Video route
 
 labelPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "res", "labels.txt")
 load_labels(labelPath)
