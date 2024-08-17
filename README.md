@@ -1,6 +1,6 @@
 # HCE Web Server
 
-This repository contains the files necessary to deploy the webserver responsible for communicating with the [HCE Inference Server](https://github.com/LordExodius/HCE-inference-server) via Docker as part of this [thesis](./README.md).
+This repository contains the files necessary to deploy the webserver responsible for communicating with the [HCE Inference Server](https://github.com/LordExodius/HCE-inference-server) via Docker as part of this [thesis](https://github.com/LordExodius/ug-thesis).
 
 ## Usage
 ### Local Inference Server
